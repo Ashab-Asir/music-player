@@ -22,7 +22,7 @@ function App() {
   return (
     <div className="App">
       <Song currentSurah={currentSurah}></Song>
-      <Player></Player>
+      <Player currentSurah={currentSurah}></Player>
     </div>
   );
 }
