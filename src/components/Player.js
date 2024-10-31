@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlay,
   faAngleLeft,
+  faPause,
   faAngleRight,
 } from "@fortawesome/free-solid-svg-icons";
 export default function Player({ currentSurah }) {
@@ -13,21 +14,26 @@ export default function Player({ currentSurah }) {
   if (!currentSurah) {
     <div>Loading...</div>;
   }
-
-  // Function to handle play button click
-  const playAllAyahs = () => {
-    if (currentAyahIndex < currentSurah.ayahs.length) {
-      setIsPlaying(true);
+  const togglePlayPause = () => {
+    if (isPlaying) {
+      audioRef.current.pause(); // Pause the audio
+      setIsPlaying(false); // Update state
+    } else {
+      if (currentAyahIndex === currentSurah.ayahs.length) {
+        setCurrentAyahIndex(0);
+      }
+      playCurrentAyah(); // Play the current Ayah
     }
   };
 
-  // Effect to handle playback of Ayahs
-  useEffect(() => {
-    if (isPlaying) {
-      audioRef.current.src = currentSurah.ayahs[currentAyahIndex].audio; // Set the audio source for the current Ayah
-      audioRef.current.play(); // Play the current Ayah
-    }
-  }, [currentAyahIndex, isPlaying, currentSurah]);
+  // Function to play the current Ayah
+  const playCurrentAyah = () => {
+    audioRef.current.src = currentSurah.ayahs[currentAyahIndex].audio; // Set the audio source for the current Ayah
+    audioRef.current
+      .play()
+      .then(() => setIsPlaying(true)) // Set playing state to true if play is successful
+      .catch((error) => console.error("Error playing audio:", error)); // Handle any errors
+  };
 
   // Effect to handle moving to the next Ayah when the current one ends
   useEffect(() => {
@@ -37,7 +43,7 @@ export default function Player({ currentSurah }) {
           return prevIndex + 1; // Move to the next Ayah
         } else {
           setIsPlaying(false); // Stop playback when all Ayahs are done
-          return prevIndex; // Return the last index
+          return 0; // Stay on the last Ayah
         }
       });
     };
@@ -55,6 +61,13 @@ export default function Player({ currentSurah }) {
     };
   }, [currentSurah]);
 
+  // Effect to play the next Ayah when the current one ends
+  useEffect(() => {
+    if (isPlaying && currentAyahIndex < currentSurah.ayahs.length) {
+      playCurrentAyah(); // Play the current Ayah if playing and valid index
+    }
+  }, [currentAyahIndex, isPlaying, currentSurah]);
+
   return (
     <div className="player">
       <div className="time-control">
@@ -71,8 +84,8 @@ export default function Player({ currentSurah }) {
         <FontAwesomeIcon
           className="play"
           size="2x"
-          icon={faPlay}
-          onClick={playAllAyahs}
+          icon={isPlaying ? faPause : faPlay}
+          onClick={togglePlayPause}
         ></FontAwesomeIcon>
         <FontAwesomeIcon
           className="skip-forward"
